@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.me.outer.mapper.ApplicationMapper">
+    
+    <resultMap id="applicationMap" type="com.me.outer.entity.ApplicationDTO">
+        <id property="applicationId" column="appl_id" jdbcType="VARCHAR"/>
+        <result property="userId" column="user_id" jdbcType="INTEGER"/>
+        <result property="title" column="title_x" jdbcType="VARCHAR"/>
+        <result property="type" column="type_x" jdbcType="VARCHAR"/>
+        <result property="address" column="address_x" jdbcType="VARCHAR"/>
+        <result property="content" column="content_x" jdbcType="VARCHAR"/>
+        <result property="createDate" column="create_dt" jdbcType="TIMESTAMP"/>
+        <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+        <result property="statusRef" column="status_ref" jdbcType="VARCHAR"/>
+        <result property="serialNo" column="serialNo" jdbcType="INTEGER"/>
+        <association property="applicationStatus" javaType="com.me.outer.entity.ApplicationStatusDTO">
+            <id property="statusRef" column="status_ref" jdbcType="VARCHAR"/>
+            <result property="applicationId" column="appl_id" jdbcType="VARCHAR"/>
+            <result property="belongId" column="belong_id" jdbcType="VARCHAR"/>
+            <result property="description" column="desc_x" jdbcType="VARCHAR"/>
+            <result property="status" column="status_x" jdbcType="VARCHAR"/>
+            <result property="processDate" column="process_dt" jdbcType="VARCHAR"/>
+            <result property="processBy" column="process_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_dt" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+        </association>
+    </resultMap>
+    
+    <insert id="saveApplication" parameterType="com.me.outer.entity.ApplicationDTO" useGeneratedKeys="true" keyProperty="applicationId" keyColumn="appl_id">
+        INSERT INTO loss_application
+        (
+            user_id,
+            title_x,
+            type_x,
+            address_x,
+            content_x,
+            create_dt,
+            create_by,
+            status_ref
+        )
+        VALUES
+        (
+            #{userId, jdbcType=INTEGER},
+            #{title, jdbcType=VARCHAR},
+            #{type, jdbcType=VARCHAR},
+            #{address, jdbcType=VARCHAR},
+            #{content, jdbcType=VARCHAR},
+            #{createDate, jdbcType=TIMESTAMP},
+            #{createBy, jdbcType=VARCHAR},
+            #{statusRef, jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <delete id="deleteApplicationById" parameterType="java.lang.Integer">
+        DELETE FROM loss_application WHERE appl_id = #{applicationId, jdbcType=INTEGER}
+    </delete>
+
+    <select id="getApplicationById" parameterType="java.lang.Integer" resultMap="applicationMap">
+        SELECT
+            (@rownum:=@rownum+1) AS serialNo,
+            a.*,
+            s.*
+        FROM (SELECT @rownum:=0) r, loss_application a
+        LEFT JOIN loss_appl_status s ON a.status_ref = s.status_ref
+        WHERE a.appl_id = #{applicationId}
+    </select>
+
+    <delete id="deleteApplicationByUserId" parameterType="java.lang.Integer">
+        DELETE FROM loss_application WHERE user_id = #{userId, jdbcType=INTEGER}
+    </delete>
+
+    <select id="listProcessData" resultMap="applicationMap">
+        SELECT
+            (@rownum:=@rownum+1) AS serialNo,
+            a.*,
+            s.*
+        FROM (SELECT @rownum:=0) r, loss_application a
+        LEFT JOIN loss_appl_status s ON a.status_ref = s.status_ref
+        WHERE s.status_x = 'Processing'
+    </select>
+
+    <select id="listClaimData" resultMap="applicationMap">
+        SELECT
+            (@rownum:=@rownum+1) AS serialNo,
+            a.*,
+            s.*
+        FROM (SELECT @rownum:=0) r, loss_application a
+        LEFT JOIN loss_appl_status s ON a.status_ref = s.status_ref
+        WHERE s.status_x = 'Pending'
+        <if test="userId!=null and userId!=''">
+            AND a.user_id != #{userId}
+        </if>
+    </select>
+
+    <select id="listAllClaimData" resultMap="applicationMap">
+        SELECT
+        (@rownum:=@rownum+1) AS serialNo,
+            a.*,
+            s.*
+        FROM (SELECT @rownum:=0) r, loss_application a
+        LEFT JOIN loss_appl_status s ON a.status_ref = s.status_ref
+    </select>
+
+    <select id="listBelongData" resultType="com.me.outer.entity.ApplicationDTO">
+        SELECT
+            (@rownum:=@rownum+1) AS serialNo,
+            a.title_x AS title,
+            s.status_x AS status,
+            s.appl_id AS applicationId,
+            DATE_FORMAT(s.create_dt, '%Y-%m-%d %H:%i') AS createDateStr
+        FROM (SELECT @rownum:=0) r, loss_application a
+        LEFT JOIN loss_appl_status s ON a.appl_id = s.appl_id
+        WHERE s.belong_id = #{userId} AND a.user_id != #{userId} AND s.status_x != 'Pending'
+    </select>
+
+    <select id="listPublishData" resultMap="applicationMap">
+        SELECT
+            (@rownum:=@rownum+1) AS serialNo,
+            a.*,
+            s.*
+        FROM (SELECT @rownum:=0) r, loss_application a
+        LEFT JOIN loss_appl_status s ON a.status_ref = s.status_ref
+        WHERE a.user_id = #{userId}
+    </select>
+
+    <update id="updateApplicationRef">
+        UPDATE loss_application SET status_ref = #{statusRef, jdbcType=VARCHAR} WHERE appl_id = #{applicationId, jdbcType=INTEGER}
+    </update>
+    
+</mapper>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.me.outer.mapper.UserMapper">
+
+    <select id="getUserByUsernameAndPassword" resultType="com.me.outer.entity.UserDTO">
+        SELECT
+            user_id AS userId,
+            username_x AS username,
+            password_x AS password,
+            sex_c AS sex,
+            age_i AS age,
+            email_x AS email,
+            phone_x AS phone,
+            desc_x AS description,
+            type_c AS type,
+            create_dt AS createDate,
+            create_by AS createBy
+        FROM loss_user
+        WHERE username_x = #{username} AND password_x = #{password}
+    </select>
+
+    <insert id="saveUser" parameterType="com.me.outer.entity.UserDTO">
+        INSERT INTO loss_user
+        (
+            username_x,
+            password_x,
+            sex_c,
+            age_i,
+            email_x,
+            phone_x,
+            desc_x,
+            type_c,
+            create_dt,
+            create_by
+        )
+        VALUES
+        (
+            #{username, jdbcType=VARCHAR},
+            #{password, jdbcType=VARCHAR},
+            #{sex, jdbcType=VARCHAR},
+            #{age, jdbcType=INTEGER},
+            #{email, jdbcType=VARCHAR},
+            #{phone, jdbcType=VARCHAR},
+            #{description, jdbcType=VARCHAR},
+            #{type, jdbcType=VARCHAR},
+            #{createDate, jdbcType=TIMESTAMP},
+            #{createBy, jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <select id="listUserData" resultType="com.me.outer.entity.UserDTO">
+        SELECT
+            (@rownum:=@rownum+1) AS serialNo,
+            u.user_id AS userId,
+            u.username_x AS username,
+            u.password_x AS password,
+            u.sex_c AS sex,
+            u.age_i AS age,
+            u.email_x AS email,
+            u.phone_x AS phone,
+            u.desc_x AS description,
+            u.type_c AS type,
+            u.create_dt AS createDate,
+            u.create_by AS createBy
+        FROM (SELECT @rownum:=0) r, loss_user u
+    </select>
+
+    <select id="getUserById" parameterType="java.lang.Integer" resultType="com.me.outer.entity.UserDTO">
+        SELECT
+            u.user_id AS userId,
+            u.username_x AS username,
+            u.password_x AS password,
+            u.sex_c AS sex,
+            u.age_i AS age,
+            u.email_x AS email,
+            u.phone_x AS phone,
+            u.desc_x AS description,
+            u.type_c AS type,
+            u.create_dt AS createDate,
+            u.create_by AS createBy
+        FROM loss_user u
+        WHERE u.user_id = #{userId, jdbcType=INTEGER}
+    </select>
+    
+</mapper>
